@@ -1,0 +1,10 @@
+data/
+__pycache__/
+assets/
+
+node_modules/
+dist/
+.env*
+
+.DS_Store
+*.log
