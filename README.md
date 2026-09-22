@@ -2,6 +2,8 @@
 
 A Vite + Vue 3 dataset browser with head-camera preview grids, animated transitions to a thumbnail list and dual-camera detail view, synchronized playback, and original English/Chinese annotations. Animations use Motion for Vue.
 
+The UI temporarily displays English annotations only; Chinese annotations and the language switch are disabled in `EpisodeDetail.vue`. The underlying bilingual catalog is retained.
+
 ## GitHub Pages + COS
 
 Production is a static site: publish `dist/` on GitHub Pages. The browser fetches the sanitized COS JSONL index, falling back to a bundled gzip snapshot if COS fails, times out after 15 seconds, or returns an invalid/empty catalog. It decompresses, parses and queries the catalog in a Web Worker, and uses the absolute video/thumbnail URLs in each record. No Node backend, local dataset, FFmpeg, API proxy, or credentials are required for the hosted frontend. The index is downloaded once per page session; parsing runs outside the UI thread.

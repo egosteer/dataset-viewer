@@ -4,9 +4,12 @@ import { motion } from 'motion-v'
 const props = defineProps({ episode:Object, entryId:Number, transition:Object, reduced:Boolean, canPrevious:Boolean, canNext:Boolean })
 const emit = defineEmits(['previous','next','close'])
 const head=ref(null), chest=ref(null), mountedMedia=ref(false), headReady=ref(false), chestReady=ref(false)
-const playing=ref(false), time=ref(0), speed=ref('1'), language=ref('en'), error=ref(''), direction=ref('next')
+const playing=ref(false), time=ref(0), speed=ref('1'), error=ref(''), direction=ref('next')
 let mediaTimer, playVersion=0
-const annotations=computed(()=>props.episode.annotations[language.value] || [])
+// Temporarily show English only. Restore the language ref and controls below to re-enable Chinese.
+// const language=ref('en')
+// const annotations=computed(()=>props.episode.annotations[language.value] || [])
+const annotations=computed(()=>props.episode.annotations.en || [])
 const stamp=n=>`${Math.floor((n||0)/60)}:${String(Math.floor((n||0)%60)).padStart(2,'0')}`
 function pause(){playVersion++;playing.value=false;head.value?.pause();chest.value?.pause()}
 async function play(){
@@ -67,8 +70,16 @@ onBeforeUnmount(()=>{pause();clearTimeout(mediaTimer)})
   </div>
   <div v-if="error" class="media-error" role="alert">{{error}} <button @click="retry">Retry</button></div>
   <section class="annotations">
-    <div class="annotation-heading"><h2>Annotations</h2><div class="language-switch" aria-label="Annotation language"><button :class="{active:language==='en'}" @click="language='en'" :aria-pressed="language==='en'">English</button><button :class="{active:language==='zh'}" @click="language='zh'" :aria-pressed="language==='zh'">中文</button></div></div>
-    <div class="annotation-track"><Transition :name="'annotation-'+direction"><ol :key="episode.episode_index" :lang="language==='zh'?'zh-CN':'en'"><li v-for="(text,i) in annotations" :key="i"><span>{{String(i+1).padStart(2,'0')}}</span><p>{{text}}</p></li><li v-if="!annotations.length" class="muted"><p>{{language==='zh'?'该样本暂无原始中文标注。':'No English annotations available.'}}</p></li></ol></Transition></div>
-    <p class="annotation-footnote">{{language==='zh'?'保留原始标注；中英文列表不逐条对应。':'Original annotations. Language lists are independent.'}}</p>
+    <div class="annotation-heading">
+      <h2>Annotations</h2>
+      <!-- Temporarily disabled: English/Chinese annotation switch.
+      <div class="language-switch" aria-label="Annotation language">
+        <button :class="{active:language==='en'}" @click="language='en'" :aria-pressed="language==='en'">English</button>
+        <button :class="{active:language==='zh'}" @click="language='zh'" :aria-pressed="language==='zh'">中文</button>
+      </div>
+      -->
+    </div>
+    <div class="annotation-track"><Transition :name="'annotation-'+direction"><ol :key="episode.episode_index" lang="en"><li v-for="(text,i) in annotations" :key="i"><span>{{String(i+1).padStart(2,'0')}}</span><p>{{text}}</p></li><li v-if="!annotations.length" class="muted"><p>No English annotations available.</p></li></ol></Transition></div>
+    <p class="annotation-footnote">Original English annotations.</p>
   </section>
 </template>
