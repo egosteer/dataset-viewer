@@ -1,23 +1,15 @@
-import { publicEpisode, createCatalog, readJsonLines } from './catalog.js'
+import { loadCatalog } from './load.js'
 
 let loading
-function load(indexUrl) {
-  if (!loading) loading = (async () => {
-    let response
-    try { response = await fetch(indexUrl, { credentials: 'omit' }) }
-    catch { throw new Error('Cannot load the public dataset index. Check the COS URL and its CORS settings.') }
-    if (!response.ok) throw new Error(`Public dataset index is unavailable (HTTP ${response.status}).`)
-    const rows = []
-    await readJsonLines(response, row => rows.push(publicEpisode(row)))
-    if (!rows.length) throw new Error('The public dataset index is empty.')
-    return createCatalog(rows)
-  })().catch(error => { loading = null; throw error })
+function load(indexUrl, fallbackUrl) {
+  if (!loading) loading = loadCatalog(indexUrl, fallbackUrl)
+    .catch(error => { loading = null; throw error })
   return loading
 }
 self.onmessage = async ({ data }) => {
-  const { id, request, indexUrl } = data
+  const { id, request, indexUrl, fallbackUrl } = data
   try {
-    const query = await load(indexUrl)
+    const query = await load(indexUrl, fallbackUrl)
     self.postMessage({ id, result: query(request) })
   } catch (error) { self.postMessage({ id, error: error.message }) }
 }

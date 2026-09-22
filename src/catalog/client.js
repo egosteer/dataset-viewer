@@ -1,3 +1,6 @@
+import bundledIndex from './snapshot/index.jsonl.gz?url'
+
+const fallbackUrl = new URL(bundledIndex, document.baseURI).href
 const indexUrl = import.meta.env.VITE_DATASET_INDEX_URL ||
   'https://ego-steer-1351596430.cos.ap-shanghai.myqcloud.com/previews/index.jsonl'
 const localDebug = import.meta.env.DEV && import.meta.env.VITE_DATA_SOURCE === 'local'
@@ -37,7 +40,7 @@ export async function datasetGet(request, signal) {
       reject: error => { cleanup(); reject(error) },
     })
     signal?.addEventListener('abort', abort, { once: true })
-    try { getWorker().postMessage({ id, request, indexUrl }) }
+    try { getWorker().postMessage({ id, request, indexUrl, fallbackUrl }) }
     catch (error) { cleanup(); reject(error) }
   })
 }

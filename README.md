@@ -4,11 +4,24 @@ A Vite + Vue 3 dataset browser with head-camera preview grids, animated transiti
 
 ## GitHub Pages + COS
 
-Production is a static site: publish `dist/` on GitHub Pages. The browser fetches the sanitized COS JSONL index, parses and queries it in a Web Worker, and uses the absolute video/thumbnail URLs in each record. No Node backend, local dataset, FFmpeg, API proxy, or credentials are required for the hosted frontend. The index is downloaded once per page session; parsing runs outside the UI thread.
+Production is a static site: publish `dist/` on GitHub Pages. The browser fetches the sanitized COS JSONL index, falling back to a bundled gzip snapshot if COS fails, times out after 15 seconds, or returns an invalid/empty catalog. It decompresses, parses and queries the catalog in a Web Worker, and uses the absolute video/thumbnail URLs in each record. No Node backend, local dataset, FFmpeg, API proxy, or credentials are required for the hosted frontend. The index is downloaded once per page session; parsing runs outside the UI thread.
 
-Default index: `https://ego-steer-1351596430.cos.ap-shanghai.myqcloud.com/previews/index.jsonl`. Set `VITE_DATASET_INDEX_URL` at build time to override it. The frontend expects the public index produced by [upload_cos.py](scripts/upload_cos.py), including absolute HTTPS `videos` and `thumbnails` URLs. It does not fall back to the local debug API when COS is unavailable.
+Default index: `https://ego-steer-1351596430.cos.ap-shanghai.myqcloud.com/previews/index.jsonl`. Set `VITE_DATASET_INDEX_URL` at build time to override it. The frontend expects the public index produced by [upload_cos.py](scripts/upload_cos.py), including absolute HTTPS `videos` and `thumbnails` URLs. The bundled fallback is the same sanitized schema; it never uses the local debug API in production.
 
-The COS uploader was authorized and launched on s1 on 2026-09-21. The public index is published only after all referenced videos and thumbnails verify successfully; check the upload log for completion. The website will show a loading error until that index is available and COS permits cross-origin reads.
+The COS upload completed: 108,908 MP4s and 108,908 JPEGs. On 2026-09-22, media URLs are publicly readable with GitHub-origin CORS, while the COS index still returns 403. The bundled fallback allows browsing without access to that remote index. Video playback and thumbnails still require COS media access.
+
+### Bundled index snapshot
+
+`src/catalog/snapshot/index.jsonl.gz` contains all 54,454 published episodes, including English/Chinese annotations and absolute COS media URLs, with internal paths and provenance removed. Its original JSONL size is 63,006,216 bytes (63.01 MB); the gzip download is 4,508,840 bytes (4.51 MB), 92.84% smaller. Vite emits a content-hashed static asset, so new snapshots receive a new cache URL. GitHub Pages serves it alongside the frontend; no COS credentials are required. Decompression uses the browser’s DecompressionStream API inside the worker.
+
+To regenerate after a verified complete upload, run from the repository root:
+
+```bash
+ssh s1 'python3 -' < scripts/export_static_index.py > src/catalog/snapshot/index.jsonl.gz.partial
+# Only on successful export, rename .partial to index.jsonl.gz, then test/build.
+```
+
+The exporter validates the successful full-upload record and public field allowlist. It never uploads or bundles the raw private index.
 
 ### Build / preview
 
