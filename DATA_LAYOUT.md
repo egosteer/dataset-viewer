@@ -2,6 +2,8 @@
 
 更新时间：2026-09-21。目标主机：s1。共享目录：`/share_data/zhangtingrui/egosteer-dataset-website/`。
 
+本文件描述**服务器内部数据契约**，其中视频路径为相对路径。GitHub Pages 使用另行生成的公开 COS `index.jsonl`：`videos` 和 `thumbnails` 均为绝对 HTTPS COS URL，并删除内部溯源字段。公开契约与上传白名单见 [COS_UPLOAD.md](COS_UPLOAD.md)；前端生产环境不依赖这里的本地 API 或服务器目录。
+
 本文定义正在实现的输出接口；文档存在不代表全量视频已生成。前端开发可以按下面的字段开始。实际完成情况以 `progress.json` 和 `index.ready.jsonl` 为准。
 
 2026-09-21 执行状态：全量 index 已生成（54,454 个样本、193 个任务，中文缺失 0）。首批 64 个样本的 128 个视频全部校验通过；32 并发耗时 29.27 秒，采样 FFmpeg 总 RSS 约 4 GiB。首批文件体积相对对应原始 MP4 减少 62.69%（来源裁剪与重编码均有贡献，不代表全量比例）。全量后台任务已启动，进度继续更新。

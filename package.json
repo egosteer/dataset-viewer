@@ -1,1 +1,24 @@
-{"name":"egosteer-dataset-browser","version":"1.0.0","private":true,"type":"module","scripts":{"dev":"vite --host 127.0.0.1","build":"vite build","preview":"vite preview --host 127.0.0.1","start":"node server/start.js","samples":"python3 scripts/prepare_preview.py","test":"node --test server/api.test.js"},"dependencies":{"express":"^5.1.0","motion-v":"^2.4.4","vue":"^3.5.34"},"devDependencies":{"@vitejs/plugin-vue":"^6.0.6","vite":"^8.0.12"}}
+{
+  "name": "egosteer-dataset-browser",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "start": "npm run debug",
+    "samples": "python3 scripts/prepare_preview.py",
+    "test": "node --test server/api.test.js src/catalog/catalog.test.js",
+    "debug": "vite --mode debug --host 127.0.0.1"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "motion-v": "^2.4.4",
+    "vue": "^3.5.34"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.6",
+    "vite": "^8.0.12"
+  }
+}

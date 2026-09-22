@@ -2,36 +2,52 @@
 
 A Vite + Vue 3 dataset browser with head-camera preview grids, animated transitions to a thumbnail list and dual-camera detail view, synchronized playback, and original English/Chinese annotations. Animations use Motion for Vue.
 
-## Run locally
+## GitHub Pages + COS
 
-Requires Node.js 20.19+ (or 22.12+) and FFmpeg on PATH. Dataset files are supplied separately and are not included in this repository.
+Production is a static site: publish `dist/` on GitHub Pages. The browser fetches the sanitized COS JSONL index, parses and queries it in a Web Worker, and uses the absolute video/thumbnail URLs in each record. No Node backend, local dataset, FFmpeg, API proxy, or credentials are required for the hosted frontend. The index is downloaded once per page session; parsing runs outside the UI thread.
+
+Default index: `https://ego-steer-1351596430.cos.ap-shanghai.myqcloud.com/previews/index.jsonl`. Set `VITE_DATASET_INDEX_URL` at build time to override it. The frontend expects the public index produced by [upload_cos.py](scripts/upload_cos.py), including absolute HTTPS `videos` and `thumbnails` URLs. It does not fall back to the local debug API when COS is unavailable.
+
+The COS uploader was authorized and launched on s1 on 2026-09-21. The public index is published only after all referenced videos and thumbnails verify successfully; check the upload log for completion. The website will show a loading error until that index is available and COS permits cross-origin reads.
+
+### Build / preview
+
+Requires Node.js 20.19+ or 22.12+. CI uses Node 22.
 
 ```bash
 npm ci
-DATASET_DIR=/absolute/path/to/dataset npm run dev -- --port 5174
-```
-
-Open http://127.0.0.1:5174. The dataset directory must contain `index.ready.jsonl`, `tasks.json`, `progress.json`, and `assets/`, following [DATA_LAYOUT.md](DATA_LAYOUT.md). Only ready episodes appear in the browser. Without `DATASET_DIR`, the server uses `data/preview/`; a fresh clone does not include that local preview.
-
-## Build and serve
-
-```bash
 npm test
 npm run build
-DATASET_DIR=/absolute/path/to/dataset PORT=4173 npm start
+npm run preview
 ```
 
-The server binds to `127.0.0.1`. Use a reverse proxy for public hosting. The frontend needs the accompanying Node API and media server; `dist/` alone is not a complete deployment. `npm run preview` also includes the API.
+`npm run dev` also uses COS by default. Relative built asset paths support both `/` and `/dataset-viewer/`, including the catalog worker. No history-based routing or special 404 rewrite is required.
 
-- `DATASET_DIR`: directory containing the ready index and videos.
-- `FFMPEG_PATH`: optional FFmpeg executable path.
-- `THUMBNAIL_DIR`: optional writable thumbnail cache directory (defaults to `data/thumbnails/`).
+### GitHub Pages deployment
 
-The API paginates episodes and strips internal provenance fields. Video serving supports HTTP Range. Thumbnails are generated on demand from the first frame, cached locally, and limited to two concurrent FFmpeg jobs. Only the selected episode's two videos load in the browser.
+The existing repository remote is `https://github.com/egosteer/dataset-viewer.git`. The workflow in `.github/workflows/pages.yml` builds and publishes **only dist/** on pushes to main or a manual workflow dispatch. It never invokes Python, accesses COS write credentials, or uploads dataset files. Deployment setup is ready. On 2026-09-22, GitHub refused to enable Pages for this private repository with HTTP 422: the current plan does not support Pages for this repository. Keep the repository private until its owner explicitly approves a visibility change or upgrades the plan.
 
-The Python tools under `scripts/` are maintainer utilities for the original dataset environment; they are not required to run the viewer against an existing dataset. `npm run samples` additionally needs SSH access to `s1`, a prepared `data/discovery.jsonl`, and local/remote FFmpeg.
+In repository **Settings → Pages**, select **GitHub Actions** as the source. The expected project URL is `https://egosteer.github.io/dataset-viewer/`. An optional Actions repository variable `VITE_DATASET_INDEX_URL` overrides the default public index URL. Do not place COS SecretId/SecretKey into frontend variables or this deployment workflow.
 
-Generated datasets, SQLite catalogs, videos, thumbnails, dependencies, build output, and environment files are excluded from Git.
+### COS cross-origin access
+
+The index fetch requires COS CORS to allow origin `https://egosteer.github.io` (an origin has no repository path), with methods GET and HEAD. Allow `http://127.0.0.1:5173` and `http://localhost:5173` too if using those local development URLs; add the exact origin for other ports or a future custom domain. Range can be allowed as a request header, and Content-Length, Content-Range, Accept-Ranges and ETag exposed when needed. Cross-origin reads are unauthenticated. No bucket CORS/ACL changes have been made by this task.
+
+References: [Vite GitHub Pages deployment](https://vite.dev/guide/static-deploy.html#github-pages), [Tencent COS CORS](https://cloud.tencent.com/document/product/436/13318).
+
+## Local dataset debugging only
+
+The original Express API, local file serving and on-demand FFmpeg thumbnails are retained only for an explicit local debug session:
+
+```bash
+DATASET_DIR=/absolute/path/to/dataset npm run debug -- --port 5174
+```
+
+`npm start` is an alias for this debug mode. The debug server binds to `127.0.0.1`; no public hosting/reverse proxy is needed. The dataset directory must contain `index.ready.jsonl`, `tasks.json`, `progress.json`, and `assets/` per [DATA_LAYOUT.md](DATA_LAYOUT.md). Without DATASET_DIR it uses `data/preview/`, which is not included in Git. FFmpeg is needed only for local debug thumbnails. `FFMPEG_PATH` and `THUMBNAIL_DIR` remain supported.
+
+Local API middleware is enabled only in `npm run debug` (or an explicit `VITE_DATA_SOURCE=local` development session). Static preview has no API middleware, and builds reject local-data mode. `server/start.js` is a legacy loopback-only debug helper, not a production backend.
+
+Python preparation/transcoding/upload scripts are separate maintainer tools and are never required by GitHub Pages. Generated data, upload state, media, dependencies, build output, and environment files are excluded from Git.
 
 ## Original dataset preparation notes
 

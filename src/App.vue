@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { motion, AnimatePresence, LayoutGroup, useReducedMotion } from 'motion-v'
 import EpisodeDetail from './components/EpisodeDetail.vue'
+import { datasetGet as get } from './catalog/client.js'
 const catalog=ref(null), task=ref(''), taskSearch=ref(''), split=ref(''), page=ref(1)
 const list=ref({items:[],total:0}), selected=ref(null), loading=ref(true), pending=ref(null), error=ref(''), detailError=ref('')
 const sharedEpisodeId=ref(null)
@@ -16,7 +17,6 @@ const id=n=>String(n).padStart(6,'0')
 const stamp=n=>`${Math.floor((n||0)/60)}:${String(Math.floor((n||0)%60)).padStart(2,'0')}`
 const details=new Map(), prefetches=new Map(), imageFailures=ref(new Set())
 let listAbort, selectionVersion=0, opener, focusTimer, overviewScroll=0
-async function get(url,signal){const r=await fetch(url,{signal});if(!r.ok)throw new Error((await r.json()).error||'Unable to load data');return r.json()}
 async function initialize(){error.value='';try{catalog.value=await get('/api/catalog');await loadList()}catch(e){error.value=e.message;loading.value=false}}
 async function loadList(){
   clearTimeout(focusTimer);listAbort?.abort();selectionVersion++;selected.value=null;pending.value=null;detailError.value=''
