@@ -25,7 +25,7 @@ npm run preview
 
 ### GitHub Pages deployment
 
-The existing repository remote is `https://github.com/egosteer/dataset-viewer.git`. The workflow in `.github/workflows/pages.yml` builds and publishes **only dist/** on pushes to main or a manual workflow dispatch. It never invokes Python, accesses COS write credentials, or uploads dataset files. Deployment setup is ready. On 2026-09-22, GitHub refused to enable Pages for this private repository with HTTP 422: the current plan does not support Pages for this repository. Keep the repository private until its owner explicitly approves a visibility change or upgrades the plan.
+The existing repository remote is `https://github.com/egosteer/dataset-viewer.git`. The workflow in `.github/workflows/pages.yml` builds and publishes **only dist/** on pushes to main or a manual workflow dispatch. It never invokes Python, accesses COS write credentials, or uploads dataset files. The repository owner made this repository public on 2026-09-22, and GitHub Pages is enabled with GitHub Actions as the build source. Pushes to main trigger the deployment workflow.
 
 In repository **Settings → Pages**, select **GitHub Actions** as the source. The expected project URL is `https://egosteer.github.io/dataset-viewer/`. An optional Actions repository variable `VITE_DATASET_INDEX_URL` overrides the default public index URL. Do not place COS SecretId/SecretKey into frontend variables or this deployment workflow.
 
